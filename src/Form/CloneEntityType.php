@@ -144,12 +144,12 @@ class CloneEntityType extends FormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    //Get the submitted form values.
+    //Get the form state values.
     $values = $form_state->getValues();
     $entity_type = $values['show']['entity_type'];
     //Retrieve the existing content type names.
     $contentTypesNames = $this->getContentTypesList($entity_type);
-    //Check if the machine name already exists.
+    //Check if the machine name already exists in respective entity type(s).
     if (in_array($values['clone_bundle_machine'], $contentTypesNames)) {
       $form_state->setErrorByName(
         'clone_bundle_machine', $this->t('The machine name of the target entity type already exists.')
@@ -161,7 +161,7 @@ class CloneEntityType extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    // Get $form_state values.
+    //Get the form state values
     $values = $form_state->getValues();
     $op = (string) $values['op'];
     if ($op == t('Reset')) {
@@ -182,7 +182,7 @@ class CloneEntityType extends FormBase {
   }
 
   public function cloneEntityType(FormStateInterface $form_state) {
-    //Get the form values.
+    //Get the form state values
     $values = $form_state->getValues();
     $entity_type = $values['show']['entity_type'];
     //Prepare the operations array.
@@ -220,7 +220,7 @@ class CloneEntityType extends FormBase {
         $entityTypesNames[] = $taxonomyType;
       }
     }
-    //Return the result.
+    //Return the result of entity type with machine names.
     return $entityTypesNames;
   }
 

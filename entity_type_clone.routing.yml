@@ -5,4 +5,3 @@ entity_type_clone.type:
     _title: 'Clone Entity type'
   requirements:
     _permission: 'access content'
-
