@@ -6,7 +6,10 @@ use Drupal\Core\Entity\ContentEntityType;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\entity_type_clone\Helpers\EntityTypeCloneHelper;
+use Drupal\node\Entity\NodeType;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
  * Class CloneEntityType.
@@ -111,6 +114,11 @@ class CloneEntityType extends FormBase {
       '#title' => $this->t('Target bundle machine name'),
       '#required' => TRUE,
     ];
+    $form['target']['target_description'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Description'),
+      '#required' => FALSE,
+    );
     $form['message'] = [
       '#markup' => $this->t('Note: Use <b>ENTITY TYPE CLONE</b> only to clone Content Type, Taxonomy.<br>'),
     ];
@@ -135,6 +143,23 @@ class CloneEntityType extends FormBase {
   /**
    * {@inheritdoc}
    */
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+    //Get the submitted form values.
+    $values = $form_state->getValues();
+    $entity_type = $values['show']['entity_type'];
+    //Retrieve the existing content type names.
+    $contentTypesNames = $this->getContentTypesList($entity_type);
+    //Check if the machine name already exists.
+    if (in_array($values['clone_bundle_machine'], $contentTypesNames)) {
+      $form_state->setErrorByName(
+        'clone_bundle_machine', $this->t('The machine name of the target entity type already exists.')
+      );
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     // Get $form_state values.
     $values = $form_state->getValues();
@@ -143,16 +168,60 @@ class CloneEntityType extends FormBase {
       $form_state->setRedirect('entity_type_clone.type');
     }
     elseif ($op == t('Clone')) {
-      // Entity type.
-      $entity_type = $values['show']['entity_type'];
-      // Get bundle.
-      $bundle = $values['show']['type'];
-      // Get target bundle name.
-      $target_bundle = $values['show']['clone_bundle'];
-      // Get target bundle machine name.
-      $target_machine_name = $values['show']['clone_bundle_name'];
-      $form_state->setRedirect('entity_type_clone.entity_type_clone_confirmation', array('entity_type' => $entity_type, 'bundle' => $bundle, 'target' => $target_bundle, 'target_machine' => $target_machine_name));
+      //Create the batch process.
+      $batch = array(
+        'title' => t('Batch operations'),
+        'operations' => $this->cloneEntityType($form_state),
+        'finished' => '\Drupal\entity_type_clone\Form\CloneEntityTypeData::cloneEntityTypeFinishedCallback',
+        'init_message' => t('Performing batch operations...'),
+        'error_message' => t('Something went wrong. Please check the errors log.'),
+      );
+      //Set the batch.
+      batch_set($batch);
     }
+  }
+
+  public function cloneEntityType(FormStateInterface $form_state) {
+    //Get the form values.
+    $values = $form_state->getValues();
+    $entity_type = $values['show']['entity_type'];
+    //Prepare the operations array.
+    $operations = array();
+    //Clone content type operation.
+    $operations[] = ['\Drupal\entity_type_clone\Form\CloneEntityTypeData::cloneEntityTypeData', [$values]];
+    //Clone fields operations.
+    $fields = \Drupal::service('entity_field.manager')->getFieldDefinitions($entity_type, $values['show']['type']);
+    foreach ($fields as $field) {
+      if (!empty($field->getTargetBundle())) {
+        $data = ['field' => $field, 'values' => $values];
+        $operations[] = [
+          '\Drupal\entity_type_clone\Form\CloneEntityTypeData::cloneEntityTypeField',
+          [$data],
+        ];
+      }
+    }
+    //Return the result.
+    return $operations;
+  }
+
+  protected function getContentTypesList($entity_type) {
+    if ($entity_type == 'node') {
+      // Get the existing content types.
+      $contentTypes = \Drupal::service('entity.manager')->getStorage('node_type')->loadMultiple();
+      //Retrieve the existing content type names.
+      $entityTypesNames = [];
+      foreach ($contentTypes as $contentType) {
+        $entityTypesNames[] = $contentType->id();
+      }
+    }
+    elseif ($entity_type == 'taxonomy_term') {
+      $taxonomyTypes = taxonomy_vocabulary_get_names();
+      foreach ($taxonomyTypes as $taxonomyType) {
+        $entityTypesNames[] = $taxonomyType;
+      }
+    }
+    //Return the result.
+    return $entityTypesNames;
   }
 
 }
