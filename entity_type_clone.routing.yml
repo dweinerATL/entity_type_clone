@@ -1,0 +1,15 @@
+entity_type_clone.type:
+  path: '/admin/entity-type-clone'
+  defaults:
+    _form: '\Drupal\entity_type_clone\Form\CloneEntityType'
+    _title: 'Clone Entity type'
+  requirements:
+    _permission: 'access content'
+
+entity_type_clone.entity_type_clone_confirmation:
+  path: '/admin/entity-type-clone-confirmation'
+  defaults:
+    _controller: '\Drupal\entity_type_clone\Controller\CloneEntityType::confirmation'
+    _title: 'Clone Entity type'
+  requirements:
+    _permission: 'access content'

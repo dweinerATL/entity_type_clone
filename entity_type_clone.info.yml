@@ -3,3 +3,4 @@ type: module
 description: This module provide option to clone entity types.
 core: 8.x
 package: Other
+configure: entity_type_clone.type
