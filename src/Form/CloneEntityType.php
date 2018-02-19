@@ -147,13 +147,10 @@ class CloneEntityType extends FormBase {
     //Get the form state values.
     $values = $form_state->getValues();
     $entity_type = $values['show']['entity_type'];
-    //Retrieve the existing content type names.
-    $contentTypesNames = $this->getContentTypesList($entity_type);
-    //Check if the machine name already exists in respective entity type(s).
+    //Get the existing entity type machine names.
+    $contentTypesNames = $this->getMachineNamesof($entity_type);
     if (in_array($values['clone_bundle_machine'], $contentTypesNames)) {
-      $form_state->setErrorByName(
-        'clone_bundle_machine', $this->t('The machine name of the target entity type already exists.')
-      );
+      $form_state->setErrorByName('clone_bundle_machine', $this->t('The machine name of the target entity type already exists.'));
     }
   }
 
@@ -168,26 +165,30 @@ class CloneEntityType extends FormBase {
       $form_state->setRedirect('entity_type_clone.type');
     }
     elseif ($op == t('Clone')) {
-      //Create the batch process.
+      //Create the batch process for clone operations.
       $batch = array(
-        'title' => t('Batch operations'),
+        'title' => t('Cloning in process.'),
         'operations' => $this->cloneEntityType($form_state),
+        'init_message' => t('Performing clone operations...'),
         'finished' => '\Drupal\entity_type_clone\Form\CloneEntityTypeData::cloneEntityTypeFinishedCallback',
-        'init_message' => t('Performing batch operations...'),
         'error_message' => t('Something went wrong. Please check the errors log.'),
       );
-      //Set the batch.
       batch_set($batch);
     }
   }
 
+  /**
+   * 
+   * @param FormStateInterface $form_state
+   * @return array
+   * Implements to perform batch operations.
+   */
   public function cloneEntityType(FormStateInterface $form_state) {
     //Get the form state values
     $values = $form_state->getValues();
     $entity_type = $values['show']['entity_type'];
-    //Prepare the operations array.
     $operations = array();
-    //Clone content type operation.
+    //Clone entity type operation.
     $operations[] = ['\Drupal\entity_type_clone\Form\CloneEntityTypeData::cloneEntityTypeData', [$values]];
     //Clone fields operations.
     $fields = \Drupal::service('entity_field.manager')->getFieldDefinitions($entity_type, $values['show']['type']);
@@ -200,20 +201,25 @@ class CloneEntityType extends FormBase {
         ];
       }
     }
-    //Return the result.
     return $operations;
   }
 
-  protected function getContentTypesList($entity_type) {
+  /**
+   * 
+   * @param type $entity_type
+   * @return type
+   * Implement to get Machine Names of entity type.
+   */
+  protected function getMachineNamesof($entity_type) {
+    // Get the existing content type machine names.
     if ($entity_type == 'node') {
-      // Get the existing content types.
       $contentTypes = \Drupal::service('entity.manager')->getStorage('node_type')->loadMultiple();
-      //Retrieve the existing content type names.
       $entityTypesNames = [];
       foreach ($contentTypes as $contentType) {
         $entityTypesNames[] = $contentType->id();
       }
     }
+    // Get the existing vocabulary machine names.
     elseif ($entity_type == 'taxonomy_term') {
       $taxonomyTypes = taxonomy_vocabulary_get_names();
       foreach ($taxonomyTypes as $taxonomyType) {

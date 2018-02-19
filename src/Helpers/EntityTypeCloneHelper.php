@@ -21,11 +21,11 @@ class EntityTypeCloneHelper {
    * @return array $newArray
    *   The array with values replaced.   
    */
-  public static function replaceInArray($find, $replace, $arr) {
+  public static function arrayReplace($find, $replace, $arr) {
     $newArray = array();
     foreach ($arr as $key => $value) {
       if (is_array($value)) {
-        $newArray[$key] = self::replaceInArray($find, $replace, $value);
+        $newArray[$key] = self::arrayReplace($find, $replace, $value);
       }
       else {
         $newArray[$key] = str_replace($find, $replace, $value);
@@ -40,11 +40,9 @@ class EntityTypeCloneHelper {
     //Get the source field name.
     $sourceFieldName = $data['field']->getName();
     //Get the source form display
-    $sourceDisplay = \Drupal::entityTypeManager()->getStorage($storage)
-      ->load($data['values']['show']['entity_type'] . '.' . $data['values']['show']['type'] . '.' . $mode)
-      ->toArray();
+    $sourceDisplay = \Drupal::entityTypeManager()->getStorage($storage)->load($data['values']['show']['entity_type'] . '.' . $data['values']['show']['type'] . '.' . $mode)->toArray();
     //Prepare the target form display
-    $targetDisplay = EntityTypeCloneHelper::replaceInArray(
+    $targetDisplay = EntityTypeCloneHelper::arrayReplace(
         $data['values']['show']['type'], $data['values']['clone_bundle_machine'], $sourceDisplay
     );
     unset($targetDisplay['uuid']);

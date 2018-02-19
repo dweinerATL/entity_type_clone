@@ -2,19 +2,19 @@
 
 namespace Drupal\entity_type_clone\Form;
 
+use Drupal\entity_type_clone\Helpers\EntityTypeCloneHelper;
 use Drupal\node\Entity\NodeType;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Drupal\entity_type_clone\Helpers\EntityTypeCloneHelper;
 
 /**
- * Class CloneContentType.
+ * Class CloneEntityTypeData.
  *
  * @package Drupal\entity_type_clone\Form
  */
 class CloneEntityTypeData {
 
   /**
-   * Clones a content type field.
+   * Clones a entity type field.
    *
    * @param array $data
    *   Contains the field to clone and $form_state data.
@@ -43,7 +43,7 @@ class CloneEntityTypeData {
   }
 
   /**
-   * Clones a content type.
+   * Clones a entity type.
    *
    * @param array $values
    *   Contains the values of the form submitted via $form_state.
@@ -51,14 +51,14 @@ class CloneEntityTypeData {
    *   A reference to the batch operation context.
    */
   public function cloneEntityTypeData(array $values, array &$context) {
-    //Prepare the progress array.
+    // Prepare the progress array.
     if (!isset($context['sandbox']['progress'])) {
       $context['sandbox']['progress'] = 0;
     }
-    //Load the source entity type.
+    // Load the source entity type.
     if ($values['show']['entity_type'] == 'node') {
       $sourceContentType = NodeType::load($values['show']['type']);
-      //Create the target entity type.
+      // Create the target entity type.
       $targetContentType = $sourceContentType->createDuplicate();
       $targetContentType->set('uuid', \Drupal::service('uuid')->generate());
       $targetContentType->set('name', $values['clone_bundle']);
@@ -110,7 +110,7 @@ class CloneEntityTypeData {
     }
     //Send the result message.
     drupal_set_message($message, 'status', TRUE);
-    //Redirect to the content type list
+    //Redirect to the entity type clone page.
     $response = new RedirectResponse('admin/entity-type-clone');
     $response->send();
   }
