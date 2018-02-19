@@ -58,18 +58,23 @@ class CloneEntityTypeData {
     //Load the source entity type.
     if ($values['show']['entity_type'] == 'node') {
       $sourceContentType = NodeType::load($values['show']['type']);
+      //Create the target entity type.
+      $targetContentType = $sourceContentType->createDuplicate();
+      $targetContentType->set('uuid', \Drupal::service('uuid')->generate());
+      $targetContentType->set('name', $values['clone_bundle']);
+      $targetContentType->set('type', $values['clone_bundle_machine']);
+      $targetContentType->set('originalId', $values['clone_bundle_machine']);
+      $targetContentType->set('description', $values['target_description']);
+      $targetContentType->save();
     }
     if ($values['show']['entity_type'] == 'taxonomy_term') {
-      $sourceContentType = \Drupal\Core\Entity\EntityType::load($values['show']['type']);
+      $vocabulary = \Drupal\taxonomy\Entity\Vocabulary::create(array(
+          'vid' => $values['clone_bundle_machine'],
+          'description' => $values['target_description'],
+          'name' => $values['clone_bundle'],
+      ));
+      $vocabulary->save();
     }
-    //Create the target entity type.
-    $targetContentType = $sourceContentType->createDuplicate();
-    $targetContentType->set('uuid', \Drupal::service('uuid')->generate());
-    $targetContentType->set('name', $values['clone_bundle']);
-    $targetContentType->set('type', $values['clone_bundle_machine']);
-    $targetContentType->set('originalId', $values['clone_bundle_machine']);
-    $targetContentType->set('description', $values['target_description']);
-    $targetContentType->save();
     //Update the progress information.
     $context['sandbox']['progress'] ++;
     $context['sandbox']['current_item'] = $values['show']['type'];
