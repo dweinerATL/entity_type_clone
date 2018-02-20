@@ -6,10 +6,7 @@ use Drupal\Core\Entity\ContentEntityType;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\entity_type_clone\Helpers\EntityTypeCloneHelper;
-use Drupal\node\Entity\NodeType;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
  * Class CloneEntityType.
@@ -90,20 +87,21 @@ class CloneEntityType extends FormBase {
         $form['displays']['show']['type']['#options'] = $type_options;
       }
     }
-    $form['displays']['show']['type'] = [
-      '#type' => 'select',
-      '#title' => $this->t('of type'),
-      '#options' => $type_options,
-      '#prefix' => '<div id="' . $wrapper . '">',
-      '#suffix' => '</div>'
-    ];
+    if ($type_options) {
+      $form['displays']['show']['type'] = [
+        '#type' => 'select',
+        '#title' => $this->t('of type'),
+        '#options' => $type_options,
+        '#prefix' => '<div id="' . $wrapper . '">',
+        '#suffix' => '</div>'
+      ];
+    }
     //Target content type fieldset.
     $form['target'] = array(
       '#type' => 'details',
       '#title' => t('Target Entity details'),
       '#open' => TRUE,
     );
-
     $form['target']['clone_bundle'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Target bundle name'),

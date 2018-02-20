@@ -2,7 +2,7 @@
 
 namespace Drupal\entity_type_clone\Form;
 
-use Drupal\entity_type_clone\Helpers\EntityTypeCloneHelper;
+use Drupal\entity_type_clone\Controller\EntityTypeCloneController;
 use Drupal\node\Entity\NodeType;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
@@ -30,9 +30,9 @@ class CloneEntityTypeData {
     $targetFieldConfig->set('bundle', $data['values']['clone_bundle_machine']);
     $targetFieldConfig->save();
     //Copy the form display
-    EntityTypeCloneHelper::copyFieldDisplay('form', 'default', $data);
+    EntityTypeCloneController::copyFieldDisplay('form', 'default', $data);
     //Copy the view display
-    EntityTypeCloneHelper::copyFieldDisplay('view', 'default', $data);
+    EntityTypeCloneController::copyFieldDisplay('view', 'default', $data);
     //Update the progress information.target_machine_name
     $context['sandbox']['progress'] ++;
     $context['sandbox']['current_item'] = $sourceFieldName;

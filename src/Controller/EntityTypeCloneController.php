@@ -1,13 +1,16 @@
 <?php
 
-namespace Drupal\entity_type_clone\Helpers;
+namespace Drupal\entity_type_clone\Controller;
+
+use Drupal\Core\Controller\ControllerBase;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 /**
- * Class EntityTypeCloneHelper.
+ * Class EntityTypeCloneController.
  *
- * @package Drupal\entity_type_clone\Helpers
+ * @package Drupal\entity_type_clone\Controller
  */
-class EntityTypeCloneHelper {
+class EntityTypeCloneController extends ControllerBase {
 
   /**
    * Replaces string values recursively in an array.
@@ -42,7 +45,7 @@ class EntityTypeCloneHelper {
     //Get the source form display
     $sourceDisplay = \Drupal::entityTypeManager()->getStorage($storage)->load($data['values']['show']['entity_type'] . '.' . $data['values']['show']['type'] . '.' . $mode)->toArray();
     //Prepare the target form display
-    $targetDisplay = EntityTypeCloneHelper::arrayReplace(
+    $targetDisplay = EntityTypeCloneController::arrayReplace(
         $data['values']['show']['type'], $data['values']['clone_bundle_machine'], $sourceDisplay
     );
     unset($targetDisplay['uuid']);
@@ -68,6 +71,7 @@ class EntityTypeCloneHelper {
       //Save the display
       $entityDisplay->save();
     }
+    return new JsonResponse(t('Success'));
   }
 
 }
