@@ -20,9 +20,9 @@ class EntityTypeCloneController extends ControllerBase {
    * @param string $replace
    *   The replacement string.
    * @param array $arr
-   *   The array to search.   
+   *   The array to search.
    * @return array $newArray
-   *   The array with values replaced.   
+   *   The array with values replaced.
    */
   public static function arrayReplace($find, $replace, $arr) {
     $newArray = array();

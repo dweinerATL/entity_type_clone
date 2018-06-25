@@ -7,6 +7,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\entity_type_clone\Controller\UUIDController;
 
 /**
  * Class CloneEntityType.
@@ -176,7 +177,7 @@ class CloneEntityType extends FormBase {
   }
 
   /**
-   * 
+   *
    * @param FormStateInterface $form_state
    * @return array
    * Implements to perform batch operations.
@@ -203,7 +204,7 @@ class CloneEntityType extends FormBase {
   }
 
   /**
-   * 
+   *
    * @param type $entity_type
    * @return type
    * Implement to get Machine Names of entity type.

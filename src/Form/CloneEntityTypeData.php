@@ -5,6 +5,7 @@ namespace Drupal\entity_type_clone\Form;
 use Drupal\entity_type_clone\Controller\EntityTypeCloneController;
 use Drupal\node\Entity\NodeType;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Class CloneEntityTypeData.
