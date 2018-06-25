@@ -72,6 +72,7 @@ class CloneEntityType extends FormBase {
       '#empty_option' => $this->t('-select-'),
       '#size' => 1,
       '#required' => TRUE,
+      '#suffix' => '<div id="' . $wrapper . '"></div>',
       '#ajax' => [
         'callback' => [$this, 'ajaxCallChangeEntity'],
         'wrapper' => $wrapper,
@@ -88,7 +89,7 @@ class CloneEntityType extends FormBase {
         $form['displays']['show']['type']['#options'] = $type_options;
       }
     }
-    if ($type_options) {
+    if (isset($type_options)) {
       $form['displays']['show']['type'] = [
         '#type' => 'select',
         '#title' => $this->t('of type'),
