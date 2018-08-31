@@ -58,9 +58,10 @@ class CloneEntityType extends FormBase {
     $content_entity_types = [];
     $entity_type_definations = $this->entityTypeManager->getDefinitions();
     /* @var $definition \Drupal\Core\Entity\EntityTypeInterface */
+    $clone_types = ['node', 'paragraph', 'taxonomy_term'];
     foreach ($entity_type_definations as $definition) {
       if ($definition instanceof ContentEntityType) {
-        if ($definition->id() == 'node' || $definition->id() == 'taxonomy_term') {
+        if (in_array($definition->id(), $clone_types)) {
           $content_entity_types[$definition->id()] = $definition->getLabel();
         }
       }
@@ -69,7 +70,7 @@ class CloneEntityType extends FormBase {
       '#type' => 'select',
       '#title' => $this->t('Select Entity Type'),
       '#options' => $content_entity_types,
-      '#empty_option' => $this->t('-select-'),
+      '#empty_option' => $this->t('- Select Entity Type -'),
       '#size' => 1,
       '#required' => TRUE,
       '#suffix' => '<div id="' . $wrapper . '"></div>',
@@ -120,7 +121,7 @@ class CloneEntityType extends FormBase {
       '#required' => FALSE,
     );
     $form['message'] = [
-      '#markup' => $this->t('Note: Use <b>ENTITY TYPE CLONE</b> only to clone Content Type, Taxonomy.<br>'),
+      '#markup' => $this->t('Note: Use <b>ENTITY TYPE CLONE</b> only to clone Content Type, Paragraph, Taxonomy.<br>'),
     ];
     $form['submit'] = [
       '#type' => 'submit',
@@ -148,9 +149,11 @@ class CloneEntityType extends FormBase {
     $values = $form_state->getValues();
     $entity_type = $values['show']['entity_type'];
     //Get the existing entity type machine names.
-    $contentTypesNames = $this->getMachineNamesof($entity_type);
-    if (in_array($values['clone_bundle_machine'], $contentTypesNames)) {
-      $form_state->setErrorByName('clone_bundle_machine', $this->t('The machine name of the target entity type already exists.'));
+    $entityTypesNames = $this->getMachineNamesof($entity_type);
+    if ($entityTypesNames) {
+      if (in_array($values['clone_bundle_machine'], $entityTypesNames)) {
+        $form_state->setErrorByName('clone_bundle_machine', $this->t('The machine name of the target entity type already exists.'));
+      }
     }
   }
 
@@ -212,6 +215,7 @@ class CloneEntityType extends FormBase {
    */
   protected function getMachineNamesof($entity_type) {
     // Get the existing content type machine names.
+    $entityTypesNames = [];
     if ($entity_type == 'node') {
       $contentTypes = \Drupal::service('entity.manager')->getStorage('node_type')->loadMultiple();
       $entityTypesNames = [];

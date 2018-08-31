@@ -4,6 +4,7 @@ namespace Drupal\entity_type_clone\Form;
 
 use Drupal\entity_type_clone\Controller\EntityTypeCloneController;
 use Drupal\node\Entity\NodeType;
+use Drupal\paragraphs\Entity\ParagraphsType;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -32,8 +33,14 @@ class CloneEntityTypeData {
     $targetFieldConfig->save();
     //Copy the form display
     EntityTypeCloneController::copyFieldDisplay('form', 'default', $data);
-    //Copy the view display
-    EntityTypeCloneController::copyFieldDisplay('view', 'default', $data);
+    $config_factory = \Drupal::configFactory();
+    $modes = $config_factory->listAll('core.entity_view_display' . '.' . $data['values']['show']['entity_type'] . '.' . $data['values']['show']['type']);
+    foreach ($modes as $mode) {
+      $mode_explode = explode('.', $mode);
+      $view_mode = $mode_explode[4];
+      //Copy the view display
+      EntityTypeCloneController::copyFieldDisplay('view', $view_mode, $data);
+    }
     //Update the progress information.target_machine_name
     $context['sandbox']['progress'] ++;
     $context['sandbox']['current_item'] = $sourceFieldName;
@@ -64,6 +71,17 @@ class CloneEntityTypeData {
       $targetContentType->set('uuid', \Drupal::service('uuid')->generate());
       $targetContentType->set('name', $values['clone_bundle']);
       $targetContentType->set('type', $values['clone_bundle_machine']);
+      $targetContentType->set('originalId', $values['clone_bundle_machine']);
+      $targetContentType->set('description', $values['target_description']);
+      $targetContentType->save();
+    }
+    if ($values['show']['entity_type'] == 'paragraph') {
+      $sourceContentType = ParagraphsType::load($values['show']['type']);
+      // Create the target entity type.
+      $targetContentType = $sourceContentType->createDuplicate();
+      $targetContentType->set('uuid', \Drupal::service('uuid')->generate());
+      $targetContentType->set('label', $values['clone_bundle']);
+      $targetContentType->set('id', $values['clone_bundle_machine']);
       $targetContentType->set('originalId', $values['clone_bundle_machine']);
       $targetContentType->set('description', $values['target_description']);
       $targetContentType->save();
