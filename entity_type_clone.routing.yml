@@ -4,4 +4,4 @@ entity_type_clone.type:
     _form: '\Drupal\entity_type_clone\Form\CloneEntityType'
     _title: 'Clone Entity type'
   requirements:
-    _permission: 'access content'
+    _permission: 'access entity type clone'

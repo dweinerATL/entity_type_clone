@@ -7,7 +7,6 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\entity_type_clone\Controller\UUIDController;
 
 /**
  * Class CloneEntityType.
@@ -44,6 +43,15 @@ class CloneEntityType extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    $params = \Drupal::request()->query;
+    $disbaled = FALSE;
+    if ($params) {
+      $entity_type = $params->get('entity');
+      $bundle_type = $params->get('bundle');
+      if ($entity_type && $bundle_type) {
+        $disbaled = TRUE;
+      }
+    }
     $form['displays'] = array();
     $input = &$form_state->getUserInput();
     $wrapper = 'entity-wrapper';
@@ -58,7 +66,7 @@ class CloneEntityType extends FormBase {
     $content_entity_types = [];
     $entity_type_definations = $this->entityTypeManager->getDefinitions();
     /* @var $definition \Drupal\Core\Entity\EntityTypeInterface */
-    $clone_types = ['node', 'paragraph', 'taxonomy_term'];
+    $clone_types = ['node', 'paragraph', 'taxonomy_term', 'profile'];
     foreach ($entity_type_definations as $definition) {
       if ($definition instanceof ContentEntityType) {
         if (in_array($definition->id(), $clone_types)) {
@@ -73,14 +81,17 @@ class CloneEntityType extends FormBase {
       '#empty_option' => $this->t('- Select Entity Type -'),
       '#size' => 1,
       '#required' => TRUE,
+      '#disabled' => $disbaled,
+      '#default_value' => isset($entity_type) ? $entity_type : '',
       '#suffix' => '<div id="' . $wrapper . '"></div>',
       '#ajax' => [
         'callback' => [$this, 'ajaxCallChangeEntity'],
         'wrapper' => $wrapper,
       ]
     ];
-    if (isset($input['show']['entity_type'])) {
-      $default_bundles = entity_get_bundles($input['show']['entity_type']);
+    if (isset($input['show']['entity_type']) || isset($entity_type)) {
+      $entity_type_selected = isset($input['show']['entity_type']) ? $input['show']['entity_type'] : $entity_type;
+      $default_bundles = entity_get_bundles($entity_type_selected);
       // If the current base table support bundles and has more than one (like user).
       if (!empty($default_bundles)) {
         // Get all bundles and their human readable names.
@@ -95,6 +106,8 @@ class CloneEntityType extends FormBase {
         '#type' => 'select',
         '#title' => $this->t('of type'),
         '#options' => $type_options,
+        '#disabled' => $disbaled,
+        '#default_value' => $bundle_type,
         '#prefix' => '<div id="' . $wrapper . '">',
         '#suffix' => '</div>'
       ];

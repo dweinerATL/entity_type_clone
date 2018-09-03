@@ -5,8 +5,8 @@ namespace Drupal\entity_type_clone\Form;
 use Drupal\entity_type_clone\Controller\EntityTypeCloneController;
 use Drupal\node\Entity\NodeType;
 use Drupal\paragraphs\Entity\ParagraphsType;
+use Drupal\profile\Entity\ProfileType;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Class CloneEntityTypeData.
@@ -93,6 +93,18 @@ class CloneEntityTypeData {
           'name' => $values['clone_bundle'],
       ));
       $vocabulary->save();
+    }
+    if ($values['show']['entity_type'] == 'profile') {
+      $profile_type_load = ProfileType::load($values['show']['type']);
+      $type = ProfileType::create([
+          'id' => $values['clone_bundle_machine'],
+          'label' => $values['clone_bundle'],
+          'description' => isset($values['target_description']) ? $values['target_description'] : $profile_type_load->getDescription(),
+          'registration' => $profile_type_load->getRegistration(),
+          'multiple' => $profile_type_load->getMultiple(),
+          'roles' => $profile_type_load->getRoles(),
+      ]);
+      $type->save();
     }
     //Update the progress information.
     $context['sandbox']['progress'] ++;
