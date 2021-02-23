@@ -3,6 +3,7 @@
 namespace Drupal\entity_type_clone\Form;
 
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\entity_type_clone\Controller\EntityTypeCloneController;
 use Drupal\node\Entity\NodeType;
 use Drupal\paragraphs\Entity\ParagraphsType;
@@ -16,6 +17,8 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
  * @package Drupal\entity_type_clone\Form
  */
 class CloneEntityTypeData {
+
+  use StringTranslationTrait;
 
   /**
    * Clones a entity type field.
@@ -56,7 +59,7 @@ class CloneEntityTypeData {
     }
     $context['sandbox']['progress']++;
     $context['sandbox']['current_item'] = $sourceFieldName;
-    $context['message'] = t(
+    $context['message'] = $this->t(
       'Field @source successfully cloned.', ['@source' => $sourceFieldName]
     );
     $context['results']['fields'][] = $sourceFieldName;
@@ -78,25 +81,29 @@ class CloneEntityTypeData {
     // Load the source entity type.
     if ($values['show']['entity_type'] === 'node') {
       $sourceContentType = NodeType::load($values['show']['type']);
-      // Create the target entity type.
-      $targetContentType = $sourceContentType->createDuplicate();
-      $targetContentType->set('uuid', \Drupal::service('uuid')->generate());
-      $targetContentType->set('name', $values['clone_bundle']);
-      $targetContentType->set('type', $values['clone_bundle_machine']);
-      $targetContentType->set('originalId', $values['clone_bundle_machine']);
-      $targetContentType->set('description', $values['target_description']);
-      $targetContentType->save();
+      if (isset($sourceContentType)) {
+        // Create the target entity type.
+        $targetContentType = $sourceContentType->createDuplicate();
+        $targetContentType->set('uuid', \Drupal::service('uuid')->generate());
+        $targetContentType->set('name', $values['clone_bundle']);
+        $targetContentType->set('type', $values['clone_bundle_machine']);
+        $targetContentType->set('originalId', $values['clone_bundle_machine']);
+        $targetContentType->set('description', $values['target_description']);
+        $targetContentType->save();
+      }
     }
     if ($values['show']['entity_type'] === 'paragraph') {
       $sourceContentType = ParagraphsType::load($values['show']['type']);
-      // Create the target entity type.
-      $targetContentType = $sourceContentType->createDuplicate();
-      $targetContentType->set('uuid', \Drupal::service('uuid')->generate());
-      $targetContentType->set('label', $values['clone_bundle']);
-      $targetContentType->set('id', $values['clone_bundle_machine']);
-      $targetContentType->set('originalId', $values['clone_bundle_machine']);
-      $targetContentType->set('description', $values['target_description']);
-      $targetContentType->save();
+      if (isset($sourceContentType)) {
+        // Create the target entity type.
+        $targetContentType = $sourceContentType->createDuplicate();
+        $targetContentType->set('uuid', \Drupal::service('uuid')->generate());
+        $targetContentType->set('label', $values['clone_bundle']);
+        $targetContentType->set('id', $values['clone_bundle_machine']);
+        $targetContentType->set('originalId', $values['clone_bundle_machine']);
+        $targetContentType->set('description', $values['target_description']);
+        $targetContentType->save();
+      }
     }
     if ($values['show']['entity_type'] === 'taxonomy_term') {
       $vocabulary = Vocabulary::create(array(
@@ -108,20 +115,22 @@ class CloneEntityTypeData {
     }
     if ($values['show']['entity_type'] === 'profile') {
       $profile_type_load = ProfileType::load($values['show']['type']);
-      $type = ProfileType::create([
-          'id' => $values['clone_bundle_machine'],
-          'label' => $values['clone_bundle'],
-          'description' => $values['target_description'] ?? $profile_type_load->getDescription(),
-          'registration' => $profile_type_load->getRegistration(),
-          'multiple' => $profile_type_load->getMultiple(),
-          'roles' => $profile_type_load->getRoles(),
-      ]);
-      $type->save();
+      if (isset($profile_type_load)) {
+        $type = ProfileType::create([
+            'id' => $values['clone_bundle_machine'],
+            'label' => $values['clone_bundle'],
+            'description' => $values['target_description'] ?? $profile_type_load->getDescription(),
+            'registration' => $profile_type_load->getRegistration(),
+            'multiple' => $profile_type_load->getMultiple(),
+            'roles' => $profile_type_load->getRoles(),
+        ]);
+        $type->save();
+      }
     }
     // Update the progress information.
     $context['sandbox']['progress']++;
     $context['sandbox']['current_item'] = $values['show']['type'];
-    $context['message'] = t(
+    $context['message'] = $this->t(
       'Entity type @source successfully cloned.', ['@source' => $values['show']['type']]
     );
     $context['results']['source'][] = $values['show']['type'];
@@ -141,7 +150,7 @@ class CloneEntityTypeData {
   public static function cloneEntityTypeFinishedCallback($success, array $results, array $operations) {
     // Check batch operations success.
     if ($success) {
-      $message = t('"@source" content type and @fields field(s) cloned successfuly to "@target".', array(
+      $message = $this->t('"@source" content type and @fields field(s) cloned successfuly to "@target".', array(
         '@source' => $results['source'][0],
         '@fields' => count($results['fields']),
         '@target' => $results['target'][0],
@@ -149,7 +158,7 @@ class CloneEntityTypeData {
       );
     }
     else {
-      $message = t('Finished with an error.');
+      $message = $htis->t('Finished with an error.');
     }
     // Send the result message.
     \Drupal::messenger()->addStatus($message);

@@ -59,7 +59,7 @@ class CloneEntityType extends FormBase {
     // properties of what the entity to delete.
     $form['displays']['show'] = [
       '#type' => 'fieldset',
-      '#title' => t('Entity Clone Settings'),
+      '#title' => $this->t('Entity Clone Settings'),
       '#tree' => TRUE,
       '#attributes' => ['class' => ['container-inline']],
     ];
@@ -115,7 +115,7 @@ class CloneEntityType extends FormBase {
     // Target content type fieldset.
     $form['target'] = array(
       '#type' => 'details',
-      '#title' => t('Target Entity details'),
+      '#title' => $this->t('Target Entity details'),
       '#open' => TRUE,
     );
     $form['target']['clone_bundle'] = [
@@ -130,7 +130,7 @@ class CloneEntityType extends FormBase {
     ];
     $form['target']['target_description'] = array(
       '#type' => 'textarea',
-      '#title' => t('Description'),
+      '#title' => $this->t('Description'),
       '#required' => FALSE,
     );
     $form['message'] = [
@@ -175,17 +175,17 @@ class CloneEntityType extends FormBase {
     // Get the form state values.
     $values = $form_state->getValues();
     $op = (string) $values['op'];
-    if ($op === t('Reset')) {
+    if ($op === $this->t('Reset')) {
       $form_state->setRedirect('entity_type_clone.type');
     }
-    elseif ($op === t('Clone')) {
+    elseif ($op === $this->t('Clone')) {
       // Create the batch process for clone operations.
       $batch = array(
-        'title' => t('Cloning in process.'),
+        'title' => $this->t('Cloning in process.'),
         'operations' => $this->cloneEntityType($form_state),
-        'init_message' => t('Performing clone operations...'),
+        'init_message' => $this->t('Performing clone operations...'),
         'finished' => '\Drupal\entity_type_clone\Form\CloneEntityTypeData::cloneEntityTypeFinishedCallback',
-        'error_message' => t('Something went wrong. Please check the errors log.'),
+        'error_message' => $this->t('Something went wrong. Please check the errors log.'),
       );
       batch_set($batch);
     }
