@@ -2,6 +2,7 @@
 
 namespace Drupal\entity_type_clone\Form;
 
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\entity_type_clone\Controller\EntityTypeCloneController;
 use Drupal\node\Entity\NodeType;
 use Drupal\paragraphs\Entity\ParagraphsType;
@@ -24,25 +25,33 @@ class CloneEntityTypeData {
    *   A reference to the batch operation context.
    */
   public static function cloneEntityTypeField(array $data, array &$context) {
-    //Get the source field name.
+    // Get the source field name.
     $sourceFieldName = $data['field']->getName();
-    //Clone the field.
-    $targetFieldConfig = $data['field']->createDuplicate();
-    $targetFieldConfig->set('entity_type', $data['values']['show']['entity_type']);
-    $targetFieldConfig->set('bundle', $data['values']['clone_bundle_machine']);
-    $targetFieldConfig->save();
-    //Copy the form display
+    // Clone the field.
+    // Only create a duplicate of an entity if the field implements,
+    // EntityInterface (as this is not guaranteed e.g. for Content moderation).
+    if ($data['field'] instanceof EntityInterface) {
+      // Clone the field.
+      $targetFieldConfig = $data['field']->createDuplicate();
+      $targetFieldConfig->set('entity_type', $data['values']['show']['entity_type']);
+      $targetFieldConfig->set('bundle', $data['values']['clone_bundle_machine']);
+      $targetFieldConfig->save();
+    }
+    // Copy the form display
     EntityTypeCloneController::copyFieldDisplay('form', 'default', $data);
     $config_factory = \Drupal::configFactory();
     $modes = $config_factory->listAll('core.entity_view_display' . '.' . $data['values']['show']['entity_type'] . '.' . $data['values']['show']['type']);
     foreach ($modes as $mode) {
       $mode_explode = explode('.', $mode);
       $view_mode = $mode_explode[4];
-      //Copy the view display
+      // Copy the view display
       EntityTypeCloneController::copyFieldDisplay('view', $view_mode, $data);
     }
-    //Update the progress information.target_machine_name
-    $context['sandbox']['progress'] ++;
+    // Update the progress information.target_machine_name.
+    if (empty($context['sandbox']['progress'])) {
+      $context['sandbox']['progress'] = 0;
+    }
+    $context['sandbox']['progress']++;
     $context['sandbox']['current_item'] = $sourceFieldName;
     $context['message'] = t(
       'Field @source successfully cloned.', ['@source' => $sourceFieldName]
@@ -58,13 +67,13 @@ class CloneEntityTypeData {
    * @param array $context
    *   A reference to the batch operation context.
    */
-  public function cloneEntityTypeData(array $values, array &$context) {
+  public static function cloneEntityTypeData(array $values, array &$context) {
     // Prepare the progress array.
     if (!isset($context['sandbox']['progress'])) {
       $context['sandbox']['progress'] = 0;
     }
     // Load the source entity type.
-    if ($values['show']['entity_type'] == 'node') {
+    if ($values['show']['entity_type'] === 'node') {
       $sourceContentType = NodeType::load($values['show']['type']);
       // Create the target entity type.
       $targetContentType = $sourceContentType->createDuplicate();
@@ -75,7 +84,7 @@ class CloneEntityTypeData {
       $targetContentType->set('description', $values['target_description']);
       $targetContentType->save();
     }
-    if ($values['show']['entity_type'] == 'paragraph') {
+    if ($values['show']['entity_type'] === 'paragraph') {
       $sourceContentType = ParagraphsType::load($values['show']['type']);
       // Create the target entity type.
       $targetContentType = $sourceContentType->createDuplicate();
@@ -86,7 +95,7 @@ class CloneEntityTypeData {
       $targetContentType->set('description', $values['target_description']);
       $targetContentType->save();
     }
-    if ($values['show']['entity_type'] == 'taxonomy_term') {
+    if ($values['show']['entity_type'] === 'taxonomy_term') {
       $vocabulary = \Drupal\taxonomy\Entity\Vocabulary::create(array(
           'vid' => $values['clone_bundle_machine'],
           'description' => $values['target_description'],
@@ -94,20 +103,20 @@ class CloneEntityTypeData {
       ));
       $vocabulary->save();
     }
-    if ($values['show']['entity_type'] == 'profile') {
+    if ($values['show']['entity_type'] === 'profile') {
       $profile_type_load = ProfileType::load($values['show']['type']);
       $type = ProfileType::create([
           'id' => $values['clone_bundle_machine'],
           'label' => $values['clone_bundle'],
-          'description' => isset($values['target_description']) ? $values['target_description'] : $profile_type_load->getDescription(),
+          'description' => $values['target_description'] ?? $profile_type_load->getDescription(),
           'registration' => $profile_type_load->getRegistration(),
           'multiple' => $profile_type_load->getMultiple(),
           'roles' => $profile_type_load->getRoles(),
       ]);
       $type->save();
     }
-    //Update the progress information.
-    $context['sandbox']['progress'] ++;
+    // Update the progress information.
+    $context['sandbox']['progress']++;
     $context['sandbox']['current_item'] = $values['show']['type'];
     $context['message'] = t(
       'Entity type @source successfully cloned.', ['@source' => $values['show']['type']]
@@ -127,7 +136,7 @@ class CloneEntityTypeData {
    *   The array of operations processed by the batch.
    */
   public static function cloneEntityTypeFinishedCallback($success, array $results, array $operations) {
-    //Check batch operations success.
+    // Check batch operations success.
     if ($success) {
       $message = t('"@source" content type and @fields field(s) cloned successfuly to "@target".', array(
         '@source' => $results['source'][0],
@@ -139,9 +148,9 @@ class CloneEntityTypeData {
     else {
       $message = t('Finished with an error.');
     }
-    //Send the result message.
-    drupal_set_message($message, 'status', TRUE);
-    //Redirect to the entity type clone page.
+    // Send the result message.
+    \Drupal::messenger()->addStatus($message);
+    // Redirect to the entity type clone page.
     $response = new RedirectResponse('admin/entity-type-clone');
     $response->send();
   }
