@@ -32,6 +32,8 @@ class CloneEntityTypeData {
     // Only create a duplicate of an entity if the field implements,
     // EntityInterface (as this is not guaranteed e.g. for Content moderation).
     if ($data['field'] instanceof EntityInterface) {
+      // Only create a duplicate of an entity if the field implements,
+      // EntityInterface (as this is not guaranteed e.g. for Content moderation).
       // Clone the field.
       $targetFieldConfig = $data['field']->createDuplicate();
       $targetFieldConfig->set('entity_type', $data['values']['show']['entity_type']);
