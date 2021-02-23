@@ -21,7 +21,7 @@ class EntityTypeCloneController extends ControllerBase {
    *   The replacement string.
    * @param array $arr
    *   The array to search.
-   * @return array $newArray
+   * @return array
    *   The array with values replaced.
    */
   public static function arrayReplace($find, $replace, $arr) {
@@ -40,35 +40,34 @@ class EntityTypeCloneController extends ControllerBase {
   public static function copyFieldDisplay($display, $mode, $data) {
     // Prepare the storage string
     $storage = 'entity_' . $display . '_display';
-    //Get the source field name.
+    // Get the source field name.
     $sourceFieldName = $data['field']->getName();
-    //Get the source form display
+    // Get the source form display.
     $sourceDisplay = \Drupal::entityTypeManager()->getStorage($storage)->load($data['values']['show']['entity_type'] . '.' . $data['values']['show']['type'] . '.' . $mode)->toArray();
-    //Prepare the target form display
+    // Prepare the target form display.
     $targetDisplay = EntityTypeCloneController::arrayReplace(
         $data['values']['show']['type'], $data['values']['clone_bundle_machine'], $sourceDisplay
     );
-    unset($targetDisplay['uuid']);
-    unset($targetDisplay['_core']);
-    //Save the target display
-    if ($display == 'form') {
-      //Save the form display
+    unset($targetDisplay['uuid'], $targetDisplay['_core']);
+    // Save the target display.
+    if ($display === 'form') {
+      // Save the form display.
       $displayConfig = \Drupal::configFactory()
         ->getEditable('core.' . $storage . '.' . $data['values']['show']['entity_type'] . '.' . $data['values']['clone_bundle_machine'] . '.' . $mode)
         ->setData($targetDisplay)
         ->save();
     }
-    else if ($display == 'view') {
-      //Save the view display
-      $entityDisplay = entity_get_display($data['values']['show']['entity_type'], $data['values']['clone_bundle_machine'], $mode);
+    elseif ($display === 'view') {
+      // Save the view display.
+      $entityDisplay = \Drupal::service('entity_display.repository')->getViewDisplay($data['values']['show']['entity_type'], $data['values']['clone_bundle_machine'], $mode);
       if (isset($targetDisplay['content'][$sourceFieldName])) {
         $entityDisplay->setComponent($sourceFieldName, $targetDisplay['content'][$sourceFieldName]);
       }
-      //Hide the field if needed
-      if (isset($targetDisplay['hidden'][$sourceFieldName]) && (int) $targetDisplay['hidden'][$sourceFieldName] == 1) {
+      // Hide the field if needed.
+      if (isset($targetDisplay['hidden'][$sourceFieldName]) && (int) $targetDisplay['hidden'][$sourceFieldName] === 1) {
         $entityDisplay->removeComponent($sourceFieldName);
       }
-      //Save the display
+      // Save the display.
       $entityDisplay->save();
     }
     return new JsonResponse(t('Success'));

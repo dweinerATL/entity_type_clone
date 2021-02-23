@@ -2,6 +2,6 @@ name: Entity Type Clone
 type: module
 description: This module provide option to clone entity types.
 core: 8.x
+core_version_requirement: ^8 || ^9
 package: Other
 configure: entity_type_clone.type
-version: '8.x-1.3'

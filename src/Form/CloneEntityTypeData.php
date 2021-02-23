@@ -7,6 +7,7 @@ use Drupal\entity_type_clone\Controller\EntityTypeCloneController;
 use Drupal\node\Entity\NodeType;
 use Drupal\paragraphs\Entity\ParagraphsType;
 use Drupal\profile\Entity\ProfileType;
+use Drupal\taxonomy\Entity\Vocabulary;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
@@ -96,7 +97,7 @@ class CloneEntityTypeData {
       $targetContentType->save();
     }
     if ($values['show']['entity_type'] === 'taxonomy_term') {
-      $vocabulary = \Drupal\taxonomy\Entity\Vocabulary::create(array(
+      $vocabulary = Vocabulary::create(array(
           'vid' => $values['clone_bundle_machine'],
           'description' => $values['target_description'],
           'name' => $values['clone_bundle'],
