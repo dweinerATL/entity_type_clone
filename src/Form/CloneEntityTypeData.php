@@ -150,12 +150,11 @@ class CloneEntityTypeData {
   public static function cloneEntityTypeFinishedCallback($success, array $results, array $operations) {
     // Check batch operations success.
     if ($success) {
-      $message = $this->t('"@source" content type and @fields field(s) cloned successfuly to "@target".', array(
+      $message = $this->t('"@source" content type and @fields field(s) cloned successfuly to "@target".', [
         '@source' => $results['source'][0],
         '@fields' => count($results['fields']),
         '@target' => $results['target'][0],
-        )
-      );
+      ]);
     }
     else {
       $message = $htis->t('Finished with an error.');

@@ -52,7 +52,7 @@ class CloneEntityType extends FormBase {
         $disbaled = TRUE;
       }
     }
-    $form['displays'] = array();
+    $form['displays'] = [];
     $input = &$form_state->getUserInput();
     $wrapper = 'entity-wrapper';
     // Create the part of the form that allows the user to select the basic
@@ -113,11 +113,11 @@ class CloneEntityType extends FormBase {
       ];
     }
     // Target content type fieldset.
-    $form['target'] = array(
+    $form['target'] = [
       '#type' => 'details',
       '#title' => $this->t('Target Entity details'),
       '#open' => TRUE,
-    );
+    ];
     $form['target']['clone_bundle'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Target bundle name'),
@@ -128,11 +128,11 @@ class CloneEntityType extends FormBase {
       '#title' => $this->t('Target bundle machine name'),
       '#required' => TRUE,
     ];
-    $form['target']['target_description'] = array(
+    $form['target']['target_description'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Description'),
       '#required' => FALSE,
-    );
+    ];
     $form['message'] = [
       '#markup' => $this->t('Note: Use <b>ENTITY TYPE CLONE</b> only to clone Content Type, Paragraph, Taxonomy.<br>'),
     ];
@@ -180,13 +180,13 @@ class CloneEntityType extends FormBase {
     }
     elseif ($op === $this->t('Clone')) {
       // Create the batch process for clone operations.
-      $batch = array(
+      $batch = [
         'title' => $this->t('Cloning in process.'),
         'operations' => $this->cloneEntityType($form_state),
         'init_message' => $this->t('Performing clone operations...'),
         'finished' => '\Drupal\entity_type_clone\Form\CloneEntityTypeData::cloneEntityTypeFinishedCallback',
         'error_message' => $this->t('Something went wrong. Please check the errors log.'),
-      );
+      ];
       batch_set($batch);
     }
   }
@@ -202,7 +202,7 @@ class CloneEntityType extends FormBase {
     // Get the form state values.
     $values = $form_state->getValues();
     $entity_type = $values['show']['entity_type'];
-    $operations = array();
+    $operations = [];
     // Clone entity type operation.
     $operations[] = ['\Drupal\entity_type_clone\Form\CloneEntityTypeData::cloneEntityTypeData', [$values]];
     // Clone fields operations.

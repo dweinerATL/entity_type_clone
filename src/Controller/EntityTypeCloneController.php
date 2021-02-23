@@ -25,7 +25,7 @@ class EntityTypeCloneController extends ControllerBase {
    *   The array with values replaced.
    */
   public static function arrayReplace($find, $replace, $arr) {
-    $newArray = array();
+    $newArray = [];
     foreach ($arr as $key => $value) {
       if (is_array($value)) {
         $newArray[$key] = self::arrayReplace($find, $replace, $value);
