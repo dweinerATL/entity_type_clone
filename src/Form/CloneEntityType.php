@@ -208,7 +208,7 @@ class CloneEntityType extends FormBase {
     // Clone fields operations.
     $fields = \Drupal::service('entity_field.manager')->getFieldDefinitions($entity_type, $values['show']['type']);
     foreach ($fields as $field) {
-      if (!empty($field->getTargetBundle())) {
+      if (!empty($field->getTargetBundle()) && !($entity_type === 'taxonomy_term' && $field->getName() === 'parent')) {
         $data = ['field' => $field, 'values' => $values];
         $operations[] = [
           '\Drupal\entity_type_clone\Form\CloneEntityTypeData::cloneEntityTypeField',
