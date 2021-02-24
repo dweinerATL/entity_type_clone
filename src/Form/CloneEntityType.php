@@ -175,10 +175,10 @@ class CloneEntityType extends FormBase {
     // Get the form state values.
     $values = $form_state->getValues();
     $op = (string) $values['op'];
-    if ($op === $this->t('Reset')) {
+    if ($op == $this->t('Reset')) {
       $form_state->setRedirect('entity_type_clone.type');
     }
-    elseif ($op === $this->t('Clone')) {
+    elseif ($op == $this->t('Clone')) {
       // Create the batch process for clone operations.
       $batch = [
         'title' => $this->t('Cloning in process.'),
@@ -222,7 +222,7 @@ class CloneEntityType extends FormBase {
   /**
    * Implement to get Machine Names of entity type.
    *
-   * @param array $entity_type
+   * @param string $entity_type
    *
    * @return array
    */
