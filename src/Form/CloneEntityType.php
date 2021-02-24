@@ -82,7 +82,7 @@ class CloneEntityType extends FormBase {
       '#size' => 1,
       '#required' => TRUE,
       '#disabled' => $disbaled,
-      '#default_value' => $entity_type ?? '',
+      '#default_value' => isset($entity_type) ? $entity_type : '',
       '#suffix' => '<div id="' . $wrapper . '"></div>',
       '#ajax' => [
         'callback' => [$this, 'ajaxCallChangeEntity'],
@@ -90,7 +90,7 @@ class CloneEntityType extends FormBase {
       ]
     ];
     if (isset($input['show']['entity_type']) || isset($entity_type)) {
-      $entity_type_selected = $input['show']['entity_type'] ?? $entity_type;
+      $entity_type_selected = isset($input['show']['entity_type']) ? $input['show']['entity_type'] : $entity_type;
       $default_bundles = \Drupal::service('entity_type.bundle.info')->getBundleInfo($entity_type_selected);
       // If the current base table support bundles and has more than one (like user).
       if (!empty($default_bundles)) {

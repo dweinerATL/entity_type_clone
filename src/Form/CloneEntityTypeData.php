@@ -3,7 +3,6 @@
 namespace Drupal\entity_type_clone\Form;
 
 use Drupal\Core\Entity\EntityInterface;
-use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\entity_type_clone\Controller\EntityTypeCloneController;
 use Drupal\node\Entity\NodeType;
 use Drupal\paragraphs\Entity\ParagraphsType;
@@ -17,8 +16,6 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
  * @package Drupal\entity_type_clone\Form
  */
 class CloneEntityTypeData {
-
-  use StringTranslationTrait;
 
   /**
    * Clones a entity type field.
@@ -59,7 +56,7 @@ class CloneEntityTypeData {
     }
     $context['sandbox']['progress']++;
     $context['sandbox']['current_item'] = $sourceFieldName;
-    $context['message'] = $this->t(
+    $context['message'] = t(
       'Field @source successfully cloned.', ['@source' => $sourceFieldName]
     );
     $context['results']['fields'][] = $sourceFieldName;
@@ -119,7 +116,7 @@ class CloneEntityTypeData {
         $type = ProfileType::create([
             'id' => $values['clone_bundle_machine'],
             'label' => $values['clone_bundle'],
-            'description' => $values['target_description'] ?? $profile_type_load->getDescription(),
+            'description' => isset($values['target_description']) ? $values['target_description'] : $profile_type_load->getDescription(),
             'registration' => $profile_type_load->getRegistration(),
             'multiple' => $profile_type_load->getMultiple(),
             'roles' => $profile_type_load->getRoles(),
@@ -130,7 +127,7 @@ class CloneEntityTypeData {
     // Update the progress information.
     $context['sandbox']['progress']++;
     $context['sandbox']['current_item'] = $values['show']['type'];
-    $context['message'] = $this->t(
+    $context['message'] = t(
       'Entity type @source successfully cloned.', ['@source' => $values['show']['type']]
     );
     $context['results']['source'][] = $values['show']['type'];
@@ -150,14 +147,14 @@ class CloneEntityTypeData {
   public static function cloneEntityTypeFinishedCallback($success, array $results, array $operations) {
     // Check batch operations success.
     if ($success) {
-      $message = $this->t('"@source" content type and @fields field(s) cloned successfuly to "@target".', [
+      $message = t('"@source" content type and @fields field(s) cloned successfuly to "@target".', [
         '@source' => $results['source'][0],
         '@fields' => count($results['fields']),
         '@target' => $results['target'][0],
       ]);
     }
     else {
-      $message = $htis->t('Finished with an error.');
+      $message = t('Finished with an error.');
     }
     // Send the result message.
     \Drupal::messenger()->addStatus($message);
