@@ -40,14 +40,17 @@ class CloneEntityTypeData {
       $targetFieldConfig->set('bundle', $data['values']['clone_bundle_machine']);
       $targetFieldConfig->save();
     }
-    // Copy the form display
-    EntityTypeCloneController::copyFieldDisplay('form', 'default', $data);
+    // Copy the form display.
+    $form_mode_displays = \Drupal::service('entity_display.repository')->getFormModeOptionsByBundle($data['values']['show']['entity_type'], $data['values']['show']['type']);
+    foreach ($form_mode_displays as $form_mode_display => $value) {
+      EntityTypeCloneController::copyFieldDisplay('form', $form_mode_display, $data);
+    }
     $config_factory = \Drupal::configFactory();
     $modes = $config_factory->listAll('core.entity_view_display' . '.' . $data['values']['show']['entity_type'] . '.' . $data['values']['show']['type']);
     foreach ($modes as $mode) {
       $mode_explode = explode('.', $mode);
       $view_mode = $mode_explode[4];
-      // Copy the view display
+      // Copy the view display.
       EntityTypeCloneController::copyFieldDisplay('view', $view_mode, $data);
     }
     // Update the progress information.target_machine_name.
