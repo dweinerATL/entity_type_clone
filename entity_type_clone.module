@@ -6,6 +6,23 @@
  */
 use Drupal\Core\Url;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Routing\RouteMatchInterface;
+
+ /**
+ * Implements hook_help().
+ */
+function entity_type_clone_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the entity_type_clone module.
+    case 'help.page.entity_type_clone':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Entity Type Clone allows Administrator to clone Content types, Paragraphs, and Vocabularies.
+      These will be used in creating an additional entity type with the existing one.
+      You can clone entity type along with the Form and View modes.') . '</p>';
+      return $output;
+  }
+}
 
 /**
  * Alter entity operations.
