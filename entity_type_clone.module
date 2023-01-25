@@ -4,11 +4,12 @@
  * @file
  * Allows to clone entity types from a simple link.
  */
+
 use Drupal\Core\Url;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 
- /**
+/**
  * Implements hook_help().
  */
 function entity_type_clone_help($route_name, RouteMatchInterface $route_match) {
@@ -34,21 +35,23 @@ function entity_type_clone_help($route_name, RouteMatchInterface $route_match) {
  *   The entity on which the linked operations will be performed.
  */
 function entity_type_clone_entity_operation_alter(array &$operations, EntityInterface $entity) {
-//Get the entity info.
+  // Get the entity info.
   $info = $entity->getEntityType();
-//Get the entity bundle.
+  // Get the entity bundle.
   $bundle_of = $info->getBundleOf();
-//Get the user account.
+  // Get the user account.
   $account = \Drupal::currentUser();
-//Add the clone link to operations.
+  // Add the clone link to operations.
   $clone_types = ['node', 'paragraph', 'taxonomy_term', 'profile'];
   if ($account->hasPermission('access entity type clone') && (in_array($bundle_of, $clone_types))) {
     $operations['clone'] = [
       'title' => t('Clone @label', ['@label' => $entity->label()]),
       'weight' => 30,
       'url' => Url::fromRoute(
-        "entity_type_clone.type", ['entity' => $bundle_of, 'bundle' => $entity->id(),
-      ]),
+        "entity_type_clone.type", [
+          'entity' => $bundle_of,
+          'bundle' => $entity->id(),
+        ]),
     ];
   }
 }

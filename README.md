@@ -1,14 +1,17 @@
-# Entity Type Clone
+# Entity Type Clone (Role clone included)
 
 Entity Type Clone allows Administrator to clone Content types, 
-Paragraphs, and Vocabularies. These will be used in creating an additional 
+Paragraphs, Profiles, Storage and Vocabularies. These will be used in creating an additional 
 entity type with the existing one. You can clone entity type along with 
 the Form and View modes.
 
 Entities that are fully supported:
 
+- Block Type (Custom Block types)
 - Content
 - Paragraph
+- Profile
+- Storage
 - Taxonomy
 
 For a full description of the module, visit the
@@ -20,7 +23,7 @@ Submit bug reports and feature suggestions, or track changes in the
 
 ## Requirements
 
-This module requires no modules outside of Drupal core.
+This module requires no modules outside of Drupal core as a dependency.
 
 
 ## Installation
@@ -32,10 +35,10 @@ information, see
 
 ## Configuration
 
-For configuration settings go to `admin/entity-type-clone`.
+For configuration settings go to `admin/config/entity-type-clone`.
 
 
 ## Maintainers
 
-- A Ajay Kumar Reddy - [ajay_reddy](https://www.drupal.org/u/ajay_reddy)
+- Ajay Reddy - [ajay_reddy](https://www.drupal.org/u/ajay_reddy)
 - Ilcho Vuchkov - [vuil](https://www.drupal.org/u/vuil)

@@ -1,7 +1,15 @@
 entity_type_clone.type:
-  path: '/admin/entity-type-clone'
+  path: '/admin/config/entity-type-clone'
   defaults:
-    _form: '\Drupal\entity_type_clone\Form\CloneEntityType'
+    _form: '\Drupal\entity_type_clone\Form\CloneEntityTypeForm'
     _title: 'Clone Entity type'
+  requirements:
+    _permission: 'access entity type clone'
+
+entity_type_clone.role:
+  path: '/admin/config/role-clone'
+  defaults:
+    _form: '\Drupal\entity_type_clone\Form\CloneRole'
+    _title: 'Clone Role'
   requirements:
     _permission: 'access entity type clone'

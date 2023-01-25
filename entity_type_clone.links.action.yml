@@ -1,0 +1,11 @@
+entity_type_clone.type:
+  route_name: entity_type_clone.type
+  title: 'Entity type clone'
+  appears_on:
+    - entity_type_clone.role
+
+entity_type_clone.role:
+  route_name: entity_type_clone.role
+  title: 'Clone role'
+  appears_on:
+    - entity_type_clone.type

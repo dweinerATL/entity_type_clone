@@ -2,18 +2,23 @@
 
 namespace Drupal\entity_type_clone\Form;
 
+use Drupal\Component\Serialization\Json;
 use Drupal\Core\Entity\ContentEntityType;
+use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
- * Class CloneEntityType.
+ * Class for cloning entity type form.
  *
  * @package Drupal\entity_type_clone\Form
  */
-class CloneEntityType extends FormBase {
+class CloneEntityTypeForm extends FormBase {
 
   /**
    * {@inheritdoc}
@@ -29,13 +34,55 @@ class CloneEntityType extends FormBase {
    */
   protected $entityTypeManager;
 
-  public function __construct(EntityTypeManagerInterface $entity_type_manager) {
+  /**
+   * The request object.
+   *
+   * @var \Symfony\Component\HttpFoundation\Request
+   */
+  protected $request;
+
+  /**
+   * The module handler.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected $moduleHandler;
+
+  /**
+   * The entity type bundle info service.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeBundleInfoInterface
+   */
+  protected $entityTypeBundleInfo;
+
+  /**
+   * The entity field manager.
+   *
+   * @var \Drupal\Core\Entity\EntityFieldManagerInterface
+   */
+  protected $entityFieldManager;
+
+  /**
+   * Constructor function.
+   */
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, Request $request, ModuleHandlerInterface $moduleHandler, EntityTypeBundleInfoInterface $entity_type_bundle_info, EntityFieldManagerInterface $entity_field_manager) {
     $this->entityTypeManager = $entity_type_manager;
+    $this->request = $request;
+    $this->moduleHandler = $moduleHandler;
+    $this->entityTypeBundleInfo = $entity_type_bundle_info;
+    $this->entityFieldManager = $entity_field_manager;
   }
 
+  /**
+   * Creates a new container for dependency injection.
+   */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('entity_type.manager')
+      $container->get('entity_type.manager'),
+      $container->get('request_stack')->getCurrentRequest(),
+      $container->get('module_handler'),
+      $container->get('entity_type.bundle.info'),
+      $container->get('entity_field.manager')
     );
   }
 
@@ -43,7 +90,7 @@ class CloneEntityType extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $params = \Drupal::request()->query;
+    $params = $this->request->query;
     $disbaled = FALSE;
     if ($params) {
       $entity_type = $params->get('entity');
@@ -65,14 +112,35 @@ class CloneEntityType extends FormBase {
     ];
     $content_entity_types = [];
     $entity_type_definations = $this->entityTypeManager->getDefinitions();
-    /* @var $definition \Drupal\Core\Entity\EntityTypeInterface */
-    $clone_types = ['node', 'paragraph', 'taxonomy_term', 'profile'];
+    /** @var \Drupal\Core\Entity\EntityTypeInterface $definition */
+    $clone_types = [
+      'block_content',
+      'node',
+      'taxonomy_term',
+    ];
+    $moduleHandler = $this->moduleHandler;
+    if ($moduleHandler->moduleExists('paragraphs')) {
+      $clone_types[] = 'paragraph';
+    }
+    if ($moduleHandler->moduleExists('profile')) {
+      $clone_types[] = 'profile';
+    }
+    if ($moduleHandler->moduleExists('storage')) {
+      $clone_types[] = 'storage';
+    }
     foreach ($entity_type_definations as $definition) {
       if ($definition instanceof ContentEntityType) {
         if (in_array($definition->id(), $clone_types)) {
           $content_entity_types[$definition->id()] = $definition->getLabel();
+          $bundleEntityTypes[$definition->id()] = $definition->getBundleEntityType();
         }
       }
+    }
+    if ($bundleEntityTypes) {
+      $form['bundle_types'] = [
+        '#type' => 'hidden',
+        '#value' => Json::encode($bundleEntityTypes),
+      ];
     }
     $form['displays']['show']['entity_type'] = [
       '#type' => 'select',
@@ -82,34 +150,38 @@ class CloneEntityType extends FormBase {
       '#size' => 1,
       '#required' => TRUE,
       '#disabled' => $disbaled,
-      '#default_value' => isset($entity_type) ? $entity_type : '',
+      '#default_value' => $entity_type ?? '',
       '#suffix' => '<div id="' . $wrapper . '"></div>',
       '#ajax' => [
         'callback' => [$this, 'ajaxCallChangeEntity'],
         'wrapper' => $wrapper,
-      ]
+      ],
     ];
     if (isset($input['show']['entity_type']) || isset($entity_type)) {
-      $entity_type_selected = isset($input['show']['entity_type']) ? $input['show']['entity_type'] : $entity_type;
-      $default_bundles = \Drupal::service('entity_type.bundle.info')->getBundleInfo($entity_type_selected);
-      // If the current base table support bundles and has more than one (like user).
-      if (!empty($default_bundles)) {
-        // Get all bundles and their human readable names.
-        foreach ($default_bundles as $type => $bundle) {
-          $type_options[$type] = $bundle['label'];
+      $entity_type_selected = $input['show']['entity_type'] ?? $entity_type;
+      if ($entity_type_selected) {
+        $default_bundles = $this->entityTypeBundleInfo->getBundleInfo($entity_type_selected);
+        // If the current base table support bundles and
+        // has more than one (like user).
+        if (!empty($default_bundles)) {
+          // Get all bundles and their human-readable names.
+          foreach ($default_bundles as $type => $bundle) {
+            $type_options[$type] = $bundle['label'];
+          }
+          $form['displays']['show']['type']['#options'] = $type_options;
         }
-        $form['displays']['show']['type']['#options'] = $type_options;
       }
     }
     if (isset($type_options)) {
       $form['displays']['show']['type'] = [
         '#type' => 'select',
+        '#empty_option' => $this->t('- Select -'),
         '#title' => $this->t('of type'),
         '#options' => $type_options,
         '#disabled' => $disbaled,
         '#default_value' => $bundle_type,
         '#prefix' => '<div id="' . $wrapper . '">',
-        '#suffix' => '</div>'
+        '#suffix' => '</div>',
       ];
     }
     // Target content type fieldset.
@@ -117,6 +189,14 @@ class CloneEntityType extends FormBase {
       '#type' => 'details',
       '#title' => $this->t('Target Entity details'),
       '#open' => TRUE,
+      '#states' => [
+        'visible' => [
+          'select[name="show[entity_type]"]' => ['!value' => ''],
+        ],
+        'enabled' => [
+          'select[name="show[type]"]' => ['!value' => ''],
+        ],
+      ],
     ];
     $form['target']['clone_bundle'] = [
       '#type' => 'textfield',
@@ -133,8 +213,9 @@ class CloneEntityType extends FormBase {
       '#title' => $this->t('Description'),
       '#required' => FALSE,
     ];
+
     $form['message'] = [
-      '#markup' => $this->t('Note: Use <b>ENTITY TYPE CLONE</b> only to clone Content Type, Paragraph, Taxonomy.<br>'),
+      '#markup' => $this->t('Note: After cloning with <b>ENTITY TYPE CLONE</b> please check the cloned entity type before doing config export or save any content in it.<br>'),
     ];
     $form['submit'] = [
       '#type' => 'submit',
@@ -161,8 +242,10 @@ class CloneEntityType extends FormBase {
     // Get the form state values.
     $values = $form_state->getValues();
     $entity_type = $values['show']['entity_type'];
+    $bundleTypes = Json::decode($values['bundle_types']);
+    $entityBundleType = $bundleTypes[$entity_type];
     // Get the existing entity type machine names.
-    $entityTypesNames = $this->getMachineNamesof($entity_type);
+    $entityTypesNames = $this->getMachineNamesof($entityBundleType);
     if (($entityTypesNames) && (in_array($values['clone_bundle_machine'], $entityTypesNames))) {
       $form_state->setErrorByName('clone_bundle_machine', $this->t('The machine name of the target entity type already exists.'));
     }
@@ -184,7 +267,7 @@ class CloneEntityType extends FormBase {
         'title' => $this->t('Cloning in process.'),
         'operations' => $this->cloneEntityType($form_state),
         'init_message' => $this->t('Performing clone operations...'),
-        'finished' => '\Drupal\entity_type_clone\Form\CloneEntityTypeData::cloneEntityTypeFinishedCallback',
+        'finished' => '\Drupal\entity_type_clone\CloneEntityType::cloneEntityTypeFinishedCallback',
         'error_message' => $this->t('Something went wrong. Please check the errors log.'),
       ];
       batch_set($batch);
@@ -193,10 +276,6 @@ class CloneEntityType extends FormBase {
 
   /**
    * Implements to perform batch operations.
-   *
-   * @param FormStateInterface $form_state
-   *
-   * @return array
    */
   public function cloneEntityType(FormStateInterface $form_state) {
     // Get the form state values.
@@ -204,16 +283,21 @@ class CloneEntityType extends FormBase {
     $entity_type = $values['show']['entity_type'];
     $operations = [];
     // Clone entity type operation.
-    $operations[] = ['\Drupal\entity_type_clone\Form\CloneEntityTypeData::cloneEntityTypeData', [$values]];
+    $operations[] = [
+      '\Drupal\entity_type_clone\CloneEntityType::cloneEntityTypeData',
+      [$values],
+    ];
     // Clone fields operations.
-    $fields = \Drupal::service('entity_field.manager')->getFieldDefinitions($entity_type, $values['show']['type']);
-    foreach ($fields as $field) {
-      if (!empty($field->getTargetBundle()) && !($entity_type === 'taxonomy_term' && $field->getName() === 'parent')) {
-        $data = ['field' => $field, 'values' => $values];
-        $operations[] = [
-          '\Drupal\entity_type_clone\Form\CloneEntityTypeData::cloneEntityTypeField',
-          [$data],
-        ];
+    $fields = $this->entityFieldManager->getFieldDefinitions($entity_type, $values['show']['type']);
+    if ($fields) {
+      foreach ($fields as $field) {
+        if (!empty($field->getTargetBundle()) && !($entity_type === 'taxonomy_term' && $field->getName() === 'parent')) {
+          $data = ['field' => $field, 'values' => $values];
+          $operations[] = [
+            '\Drupal\entity_type_clone\CloneEntityType::cloneEntityTypeField',
+            [$data],
+          ];
+        }
       }
     }
     return $operations;
@@ -221,26 +305,15 @@ class CloneEntityType extends FormBase {
 
   /**
    * Implement to get Machine Names of entity type.
-   *
-   * @param string $entity_type
-   *
-   * @return array
    */
   protected function getMachineNamesof($entity_type) {
     // Get the existing content type machine names.
     $entityTypesNames = [];
-    if ($entity_type === 'node') {
-      $contentTypes = \Drupal::service('entity_type.manager')->getStorage('node_type')->loadMultiple();
-      $entityTypesNames = [];
-      foreach ($contentTypes as $contentType) {
-        $entityTypesNames[] = $contentType->id();
-      }
-    }
-    // Get the existing vocabulary machine names.
-    elseif ($entity_type === 'taxonomy_term') {
-      $taxonomyTypes = taxonomy_vocabulary_get_names();
-      foreach ($taxonomyTypes as $taxonomyType) {
-        $entityTypesNames[] = $taxonomyType;
+    $entityTypes = $this->entityTypeManager->getStorage($entity_type)
+      ->loadMultiple();
+    if ($entityTypes) {
+      foreach ($entityTypes as $entityType) {
+        $entityTypesNames[] = $entityType->id();
       }
     }
     // Return the result of entity type with machine names.
