@@ -15,13 +15,13 @@ class EntityTypeCloneController extends ControllerBase {
   /**
    * Replaces string values recursively in an array.
    */
-  public static function arrayReplace($find, $replace, $arr) {
+  public static function arrayReplace(string $find, string $replace, array $arr): array {
     $newArray = [];
     foreach ($arr as $key => $value) {
       if (is_array($value)) {
         $newArray[$key] = self::arrayReplace($find, $replace, $value);
       }
-      else {
+      elseif (is_string($value)) {
         $newArray[$key] = str_replace($find, $replace, $value);
       }
     }
