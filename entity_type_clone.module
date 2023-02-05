@@ -20,7 +20,12 @@ function entity_type_clone_help($route_name, RouteMatchInterface $route_match) {
       $output .= '<h3>' . t('About') . '</h3>';
       $output .= '<p>' . t('Entity Type Clone allows Administrator to clone Content types, Paragraphs, and Vocabularies.
       These will be used in creating an additional entity type with the existing one.
-      You can clone entity type along with the Form and View modes.') . '</p>';
+      You can clone entity type along with the Form and View modes. For more information, see the <a href=":project_link">online documentation for the Automated Cron module</a>.', [':project_link' => 'https://www.drupal.org/project/entity_type_clone']) . '</p>';
+      $output .= '<h3>' . t('Uses') . '</h3>';
+      $output .= '<dl>';
+      $output .= '<dt>' . t('Clone Entity Type') . '</dt>';
+      $output .= '<dd>' . t('On the <a href=":entity_type_settings-settings">Clone Entity Type page</a>, you can clone an entity type here.', [':entity_type_settings-settings' => Url::fromRoute('entity_type_clone.type')->toString()]) . '</dd>';
+      $output .= '</dl>';
       return $output;
   }
 }
