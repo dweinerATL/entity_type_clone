@@ -18,6 +18,10 @@ class EntityTypeCloneController extends ControllerBase {
   public static function arrayReplace(string $find, string $replace, array $arr): array {
     $newArray = [];
     foreach ($arr as $key => $value) {
+      // Validate the fields like "status" and "weight" first.
+      if (is_bool($value) || is_numeric($value)) {
+        $newArray[$key] = $value;
+      }
       if (is_array($value)) {
         $newArray[$key] = self::arrayReplace($find, $replace, $value);
       }
@@ -45,7 +49,9 @@ class EntityTypeCloneController extends ControllerBase {
     $targetDisplay = EntityTypeCloneController::arrayReplace(
       $data['values']['show']['type'], $data['values']['clone_bundle_machine'], $sourceDisplay
     );
-    unset($targetDisplay['uuid'], $targetDisplay['_core']);
+    unset($targetDisplay['_core']);
+    // Generate new uuid.
+    $targetDisplay['uuid'] = \Drupal::service('uuid')->generate();
     // Save the target display.
     if ($display === 'form') {
       // Save the form display.
