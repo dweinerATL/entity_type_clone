@@ -204,9 +204,13 @@ class CloneEntityTypeForm extends FormBase {
       '#required' => TRUE,
     ];
     $form['target']['clone_bundle_machine'] = [
-      '#type' => 'textfield',
+      '#type' => 'machine_name',
       '#title' => $this->t('Target bundle machine name'),
       '#required' => TRUE,
+      '#machine_name' => [
+        'exists' => $this->getEntityLookupCallback($entity_type),
+        'source' => ['target', 'clone_bundle'],
+      ],
     ];
     $form['target']['target_description'] = [
       '#type' => 'textarea',
@@ -233,22 +237,6 @@ class CloneEntityTypeForm extends FormBase {
    */
   public function ajaxCallChangeEntity(array &$form, FormStateInterface $form_state) {
     return $form['displays']['show']['type'];
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
-    // Get the form state values.
-    $values = $form_state->getValues();
-    $entity_type = $values['show']['entity_type'];
-    $bundleTypes = Json::decode($values['bundle_types']);
-    $entityBundleType = $bundleTypes[$entity_type];
-    // Get the existing entity type machine names.
-    $entityTypesNames = $this->getMachineNamesof($entityBundleType);
-    if (($entityTypesNames) && (in_array($values['clone_bundle_machine'], $entityTypesNames))) {
-      $form_state->setErrorByName('clone_bundle_machine', $this->t('The machine name of the target entity type already exists.'));
-    }
   }
 
   /**
@@ -304,20 +292,23 @@ class CloneEntityTypeForm extends FormBase {
   }
 
   /**
-   * Implement to get Machine Names of entity type.
+   * Returns the exists callback used for the clone_bundle_machine field.
+   *
+   * @param string $entity_type
+   *
+   * @return array
    */
-  protected function getMachineNamesof($entity_type) {
-    // Get the existing content type machine names.
-    $entityTypesNames = [];
-    $entityTypes = $this->entityTypeManager->getStorage($entity_type)
-      ->loadMultiple();
-    if ($entityTypes) {
-      foreach ($entityTypes as $entityType) {
-        $entityTypesNames[] = $entityType->id();
-      }
+  protected function getEntityLookupCallback($entity_type) {
+    switch ($entity_type) {
+      case 'node':
+        return ['Drupal\node\Entity\NodeType', 'load'];
+      case 'paragraph':
+        return ['Drupal\paragraphs\Entity\ParagraphsType', 'load'];
+      case 'profile':
+        return ['Drupal\profile\Entity\ProfileType', 'load'];
+      case 'taxonomy_term':
+        return ['Drupal\taxonomy\Entity\Vocabulary', 'load'];
     }
-    // Return the result of entity type with machine names.
-    return $entityTypesNames;
   }
 
 }
