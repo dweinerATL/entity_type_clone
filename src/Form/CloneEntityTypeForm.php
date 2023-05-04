@@ -91,12 +91,15 @@ class CloneEntityTypeForm extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $params = $this->request->query;
-    $disbaled = FALSE;
+    $disabled = FALSE;
+    // Note that if a entity type does not have a clone link in the dropbutton,
+    // the user will need to add these parameters in the URL. A different 
+    // approach may be needed.
     if ($params) {
       $entity_type = $params->get('entity');
       $bundle_type = $params->get('bundle');
       if ($entity_type && $bundle_type) {
-        $disbaled = TRUE;
+        $disabled = TRUE;
       }
     }
     $form['displays'] = [];
@@ -111,7 +114,7 @@ class CloneEntityTypeForm extends FormBase {
       '#attributes' => ['class' => ['container-inline']],
     ];
     $content_entity_types = [];
-    $entity_type_definations = $this->entityTypeManager->getDefinitions();
+    $entity_type_definitions = $this->entityTypeManager->getDefinitions();
     /** @var \Drupal\Core\Entity\EntityTypeInterface $definition */
     $clone_types = [
       'block_content',
@@ -128,7 +131,7 @@ class CloneEntityTypeForm extends FormBase {
     if ($moduleHandler->moduleExists('storage')) {
       $clone_types[] = 'storage';
     }
-    foreach ($entity_type_definations as $definition) {
+    foreach ($entity_type_definitions as $definition) {
       if ($definition instanceof ContentEntityType) {
         if (in_array($definition->id(), $clone_types)) {
           $content_entity_types[$definition->id()] = $definition->getLabel();
@@ -149,7 +152,7 @@ class CloneEntityTypeForm extends FormBase {
       '#empty_option' => $this->t('- Select Entity Type -'),
       '#size' => 1,
       '#required' => TRUE,
-      '#disabled' => $disbaled,
+      '#disabled' => $disabled,
       '#default_value' => $entity_type ?? '',
       '#suffix' => '<div id="' . $wrapper . '"></div>',
       '#ajax' => [
@@ -178,7 +181,7 @@ class CloneEntityTypeForm extends FormBase {
         '#empty_option' => $this->t('- Select -'),
         '#title' => $this->t('of type'),
         '#options' => $type_options,
-        '#disabled' => $disbaled,
+        '#disabled' => $disabled,
         '#default_value' => $bundle_type,
         '#prefix' => '<div id="' . $wrapper . '">',
         '#suffix' => '</div>',
@@ -233,7 +236,14 @@ class CloneEntityTypeForm extends FormBase {
   }
 
   /**
-   * {@inheritdoc}
+   * Ajax callback on selection of the entity type.
+   * 
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state object.
+   * @return array
+   *   The ajax response. 
    */
   public function ajaxCallChangeEntity(array &$form, FormStateInterface $form_state) {
     return $form['displays']['show']['type'];
@@ -308,6 +318,8 @@ class CloneEntityTypeForm extends FormBase {
         return ['Drupal\profile\Entity\ProfileType', 'load'];
       case 'taxonomy_term':
         return ['Drupal\taxonomy\Entity\Vocabulary', 'load'];
+      case 'storage':
+        return ['Drupal\storage\Entity\StorageType', 'load'];   
     }
   }
 
