@@ -143,7 +143,7 @@ class CloneEntityTypeForm extends FormBase {
       '#size' => 1,
       '#required' => TRUE,
       '#disabled' => $disabled,
-      '#default_value' => $entity_type ?? $this->config('entity_type_clone.type')->get('entity_type'),
+      '#default_value' => $entity_type ?? '',
       '#suffix' => '<div id="' . $wrapper . '"></div>',
       '#ajax' => [
         'callback' => [$this, 'ajaxCallChangeEntity'],
