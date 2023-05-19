@@ -11,7 +11,6 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class for cloning entity type form.
@@ -33,13 +32,6 @@ class CloneEntityTypeForm extends FormBase {
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
-
-  /**
-   * The request object.
-   *
-   * @var \Symfony\Component\HttpFoundation\Request
-   */
-  protected $request;
 
   /**
    * The module handler.
@@ -65,9 +57,8 @@ class CloneEntityTypeForm extends FormBase {
   /**
    * Constructor function.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, Request $request, ModuleHandlerInterface $moduleHandler, EntityTypeBundleInfoInterface $entity_type_bundle_info, EntityFieldManagerInterface $entity_field_manager) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, ModuleHandlerInterface $moduleHandler, EntityTypeBundleInfoInterface $entity_type_bundle_info, EntityFieldManagerInterface $entity_field_manager) {
     $this->entityTypeManager = $entity_type_manager;
-    $this->request = $request;
     $this->moduleHandler = $moduleHandler;
     $this->entityTypeBundleInfo = $entity_type_bundle_info;
     $this->entityFieldManager = $entity_field_manager;
@@ -79,7 +70,6 @@ class CloneEntityTypeForm extends FormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('entity_type.manager'),
-      $container->get('request_stack')->getCurrentRequest(),
       $container->get('module_handler'),
       $container->get('entity_type.bundle.info'),
       $container->get('entity_field.manager')
@@ -90,17 +80,17 @@ class CloneEntityTypeForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $params = $this->request->query;
+    $params = $this->getRequest()->request;
     $disabled = FALSE;
-    // Note that if a entity type does not have a clone link in the dropbutton,
-    // the user will need to add these parameters in the URL. A different 
+    // Note that if an entity type does not have a clone link in the dropbutton,
+    // the user will need to add these parameters in the URL. A different
     // approach may be needed.
     if ($params) {
-      $entity_type = $params->get('entity');
-      $bundle_type = $params->get('bundle');
-      if ($entity_type && $bundle_type) {
-        $disabled = TRUE;
-      }
+      $entity_type = $params->all('show')['entity_type'];
+      $bundle_type = $params->all('show')['type'];
+//      if ($entity_type && $bundle_type) {
+//        $disabled = TRUE;
+//      }
     }
     $form['displays'] = [];
     $input = &$form_state->getUserInput();
@@ -153,7 +143,7 @@ class CloneEntityTypeForm extends FormBase {
       '#size' => 1,
       '#required' => TRUE,
       '#disabled' => $disabled,
-      '#default_value' => $entity_type ?? '',
+      '#default_value' => $entity_type ?? $this->config('entity_type_clone.type')->get('entity_type'),
       '#suffix' => '<div id="' . $wrapper . '"></div>',
       '#ajax' => [
         'callback' => [$this, 'ajaxCallChangeEntity'],
@@ -171,7 +161,6 @@ class CloneEntityTypeForm extends FormBase {
           foreach ($default_bundles as $type => $bundle) {
             $type_options[$type] = $bundle['label'];
           }
-          $form['displays']['show']['type']['#options'] = $type_options;
         }
       }
     }
@@ -237,13 +226,14 @@ class CloneEntityTypeForm extends FormBase {
 
   /**
    * Ajax callback on selection of the entity type.
-   * 
+   *
    * @param array $form
    *   The form array.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state object.
+   *
    * @return array
-   *   The ajax response. 
+   *   The ajax response.
    */
   public function ajaxCallChangeEntity(array &$form, FormStateInterface $form_state) {
     return $form['displays']['show']['type'];
@@ -312,14 +302,24 @@ class CloneEntityTypeForm extends FormBase {
     switch ($entity_type) {
       case 'node':
         return ['Drupal\node\Entity\NodeType', 'load'];
+
+      case 'block_content':
+        return ['Drupal\block_content\Entity\BlockContent', 'load'];
+
       case 'paragraph':
         return ['Drupal\paragraphs\Entity\ParagraphsType', 'load'];
+
       case 'profile':
         return ['Drupal\profile\Entity\ProfileType', 'load'];
+
       case 'taxonomy_term':
         return ['Drupal\taxonomy\Entity\Vocabulary', 'load'];
+
       case 'storage':
-        return ['Drupal\storage\Entity\StorageType', 'load'];   
+        return ['Drupal\storage\Entity\StorageType', 'load'];
+
+      case '':
+        return [];
     }
   }
 
