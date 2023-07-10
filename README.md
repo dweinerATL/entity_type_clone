@@ -1,7 +1,8 @@
 # Entity Type Clone (Role clone included)
 
 Entity Type Clone allows Administrator to clone Content types, 
-Paragraphs, Profiles, Storage and Vocabularies. These will be used in creating an additional 
+Paragraphs, Profiles, Storage and Vocabularies. 
+These will be used in creating an additional 
 entity type with the existing one. You can clone entity type along with 
 the Form and View modes.
 

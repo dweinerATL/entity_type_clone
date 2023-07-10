@@ -295,17 +295,22 @@ class CloneEntityTypeForm extends FormBase {
    * Returns the exists callback used for the clone_bundle_machine field.
    *
    * @param string $entity_type
+   *   The entity type for which to retrieve the exists callback.
    *
    * @return array
+   *   The exists callback as an array.
    */
   protected function getEntityLookupCallback($entity_type) {
     switch ($entity_type) {
       case 'node':
         return ['Drupal\node\Entity\NodeType', 'load'];
+
       case 'paragraph':
         return ['Drupal\paragraphs\Entity\ParagraphsType', 'load'];
+
       case 'profile':
         return ['Drupal\profile\Entity\ProfileType', 'load'];
+
       case 'taxonomy_term':
         return ['Drupal\taxonomy\Entity\Vocabulary', 'load'];
     }

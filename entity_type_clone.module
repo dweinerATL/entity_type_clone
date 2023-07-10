@@ -5,9 +5,9 @@
  * Allows to clone entity types from a simple link.
  */
 
-use Drupal\Core\Url;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Url;
 
 /**
  * Implements hook_help().
