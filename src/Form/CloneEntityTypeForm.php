@@ -86,11 +86,11 @@ class CloneEntityTypeForm extends FormBase {
     // the user will need to add these parameters in the URL. A different
     // approach may be needed.
     if ($params) {
-      $entity_type = $params->all('show')['entity_type'];
-      $bundle_type = $params->all('show')['type'];
-//      if ($entity_type && $bundle_type) {
-//        $disabled = TRUE;
-//      }
+      $entity_type = $params->all('show')['entity_type'] ?? '';
+      $bundle_type = $params->all('show')['type'] ?? '';
+      //      if ($entity_type && $bundle_type) {
+      //        $disabled = TRUE;
+      //      }
     }
     $form['displays'] = [];
     $input = &$form_state->getUserInput();
