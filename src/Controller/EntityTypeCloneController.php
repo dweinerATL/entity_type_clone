@@ -13,6 +13,11 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 class EntityTypeCloneController extends ControllerBase {
 
   /**
+   * Store validated displays with third-party settings.
+   */
+  protected static $checkThirdPartySettings = [];
+
+  /**
    * Replaces string values recursively in an array.
    */
   public static function arrayReplace(string $find, string $replace, array $arr): array {
@@ -45,36 +50,58 @@ class EntityTypeCloneController extends ControllerBase {
       ->getStorage($storage)
       ->load($data['values']['show']['entity_type'] . '.' . $data['values']['show']['type'] . '.' . $mode)
       ->toArray();
-    // Prepare the target form display.
-    $targetDisplay = EntityTypeCloneController::arrayReplace(
-      $data['values']['show']['type'], $data['values']['clone_bundle_machine'], $sourceDisplay
-    );
-    unset($targetDisplay['_core']);
-    // Generate new uuid.
-    $targetDisplay['uuid'] = \Drupal::service('uuid')->generate();
-    // Save the target display.
-    if ($display === 'form') {
-      // Save the form display.
-      \Drupal::configFactory()
-        ->getEditable('core.' . $storage . '.' . $data['values']['show']['entity_type'] . '.' . $data['values']['clone_bundle_machine'] . '.' . $mode)
-        ->setData($targetDisplay)
-        ->save();
-    }
-    elseif ($display === 'view') {
-      // Save the view display.
-      $entityDisplay = \Drupal::service('entity_display.repository')
-        ->getViewDisplay($data['values']['show']['entity_type'], $data['values']['clone_bundle_machine'], $mode);
-      if (isset($targetDisplay['content'][$sourceFieldName])) {
-        $entityDisplay->setComponent($sourceFieldName, $targetDisplay['content'][$sourceFieldName]);
+    // Just get enabled form and view display.
+    if ($sourceDisplay['status']) {
+      // Prepare the target form display.
+      $targetDisplay = EntityTypeCloneController::arrayReplace(
+        $data['values']['show']['type'], $data['values']['clone_bundle_machine'], $sourceDisplay
+      );
+      unset($targetDisplay['_core']);
+      // Generate new uuid.
+      $targetDisplay['uuid'] = \Drupal::service('uuid')->generate();
+      // Save the target display.
+      if ($display === 'form') {
+        // Save the form display.
+        \Drupal::configFactory()
+          ->getEditable('core.' . $storage . '.' . $data['values']['show']['entity_type'] . '.' . $data['values']['clone_bundle_machine'] . '.' . $mode)
+          ->setData($targetDisplay)
+          ->save();
       }
-      // Hide the field if needed.
-      if (isset($targetDisplay['hidden'][$sourceFieldName]) && (int) $targetDisplay['hidden'][$sourceFieldName] === 1) {
-        $entityDisplay->removeComponent($sourceFieldName);
+      elseif ($display === 'view') {
+        // Save the view display.
+        $entityDisplay = \Drupal::service('entity_display.repository')
+          ->getViewDisplay($data['values']['show']['entity_type'], $data['values']['clone_bundle_machine'], $mode);
+
+        // Add support for third party configuration in view modes like
+        // field_group, etc.
+        if (!isset(self::$checkThirdPartySettings[$mode])) {
+          $third_party_settings = $sourceDisplay['third_party_settings'];
+          if ($third_party_settings) {
+            // Avoid future checks.
+            self::$checkThirdPartySettings[$mode] = true;
+            foreach ($third_party_settings as $module => $third_data) {
+              if (is_array($third_data)) {
+                foreach ($third_data as $key => $third_value) {
+                  // Add to destination display.
+                  $entityDisplay->setThirdPartySetting($module, $key, $third_value);
+                }
+              }
+            }
+          }
+        }
+
+        if (isset($targetDisplay['content'][$sourceFieldName])) {
+          $entityDisplay->setComponent($sourceFieldName, $targetDisplay['content'][$sourceFieldName]);
+        }
+        // Hide the field if needed.
+        if (isset($targetDisplay['hidden'][$sourceFieldName]) && (int) $targetDisplay['hidden'][$sourceFieldName] === 1) {
+          $entityDisplay->removeComponent($sourceFieldName);
+        }
+        // Save the display.
+        $entityDisplay->save();
       }
-      // Save the display.
-      $entityDisplay->save();
+      return new JsonResponse(t('Success'));
     }
-    return new JsonResponse(t('Success'));
   }
 
 }
