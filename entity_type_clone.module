@@ -4,11 +4,12 @@
  * @file
  * Allows to clone entity types from a simple link.
  */
-use Drupal\Core\Url;
+
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Url;
 
- /**
+/**
  * Implements hook_help().
  */
 function entity_type_clone_help($route_name, RouteMatchInterface $route_match) {
@@ -19,7 +20,12 @@ function entity_type_clone_help($route_name, RouteMatchInterface $route_match) {
       $output .= '<h3>' . t('About') . '</h3>';
       $output .= '<p>' . t('Entity Type Clone allows Administrator to clone Content types, Paragraphs, and Vocabularies.
       These will be used in creating an additional entity type with the existing one.
-      You can clone entity type along with the Form and View modes.') . '</p>';
+      You can clone entity type along with the Form and View modes. For more information, see the <a href=":project_link">online documentation for the Automated Cron module</a>.', [':project_link' => 'https://www.drupal.org/project/entity_type_clone']) . '</p>';
+      $output .= '<h3>' . t('Uses') . '</h3>';
+      $output .= '<dl>';
+      $output .= '<dt>' . t('Clone Entity Type') . '</dt>';
+      $output .= '<dd>' . t('On the <a href=":entity_type_settings-settings">Clone Entity Type page</a>, you can clone an entity type here.', [':entity_type_settings-settings' => Url::fromRoute('entity_type_clone.type')->toString()]) . '</dd>';
+      $output .= '</dl>';
       return $output;
   }
 }
@@ -34,21 +40,23 @@ function entity_type_clone_help($route_name, RouteMatchInterface $route_match) {
  *   The entity on which the linked operations will be performed.
  */
 function entity_type_clone_entity_operation_alter(array &$operations, EntityInterface $entity) {
-//Get the entity info.
+  // Get the entity info.
   $info = $entity->getEntityType();
-//Get the entity bundle.
+  // Get the entity bundle.
   $bundle_of = $info->getBundleOf();
-//Get the user account.
+  // Get the user account.
   $account = \Drupal::currentUser();
-//Add the clone link to operations.
+  // Add the clone link to operations.
   $clone_types = ['node', 'paragraph', 'taxonomy_term', 'profile'];
   if ($account->hasPermission('access entity type clone') && (in_array($bundle_of, $clone_types))) {
     $operations['clone'] = [
       'title' => t('Clone @label', ['@label' => $entity->label()]),
       'weight' => 30,
       'url' => Url::fromRoute(
-        "entity_type_clone.type", ['entity' => $bundle_of, 'bundle' => $entity->id(),
-      ]),
+        "entity_type_clone.type", [
+          'entity' => $bundle_of,
+          'bundle' => $entity->id(),
+        ]),
     ];
   }
 }

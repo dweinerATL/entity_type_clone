@@ -1,7 +1,10 @@
 name: Entity Type Clone
 type: module
-description: This module provide option to clone entity types.
-core: 8.x
-core_version_requirement: ^8 || ^9
+description: This module provide option to clone entity types and role.
+core_version_requirement: ^8 || ^9 || ^10
 package: Other
 configure: entity_type_clone.type
+dependencies:
+  - drupal:block_content
+  - drupal:node
+  - drupal:taxonomy
