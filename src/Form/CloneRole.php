@@ -9,6 +9,7 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\user\Entity\Role;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\user\RoleInterface;
 
 /**
  * Class for cloning role.
@@ -69,7 +70,9 @@ class CloneRole extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $note = NULL) {
-    $userRoles = user_role_names();
+    $roles = Role::loadMultiple();
+    $userRoles = array_map(fn(RoleInterface $role) => $role->label(), $roles);
+
     asort($userRoles);
     foreach ($userRoles as $key => $value) {
       $options[$key] = $value;
