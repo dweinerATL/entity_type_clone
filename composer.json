@@ -1,0 +1,8 @@
+{
+  "name": "dweineratl/entity_type_clone",
+  "description": "Clone Drupal Content types, Paragraphs, Profiles, Storage and Vocabularies",
+  "type": "drupal-module",
+  "require": {
+    "drupal/core": "^11"
+  }
+}
